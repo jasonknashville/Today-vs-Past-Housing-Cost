@@ -270,8 +270,19 @@ function render(){
 
 yearSel.onchange = () => {
   const params = new URLSearchParams(window.location.search);
+
+  // Preserve existing UTMs and add/update year
   params.set("year", yearSel.value);
-  window.history.replaceState({}, "", `${location.pathname}?${params}`);
+
+  window.history.replaceState(
+    {},
+    "",
+    `${location.pathname}?${params.toString()}`
+  );
+
+  render();
+};
+
   render();
 };
 
