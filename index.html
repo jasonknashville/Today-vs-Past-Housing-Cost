@@ -229,11 +229,6 @@ function getYearFromURL(){
 
 // ------------- RENDER ---------------
 const yearSel = document.getElementById("year");
-  // Populate dropdown options (THIS WAS MISSING)
-Object.keys(data).forEach(y => {
-  yearSel.innerHTML += `<option value="${y}">${y}</option>`;
-});
-
 Object.keys(data).forEach(y=>yearSel.innerHTML+=`<option value="${y}">${y}</option>`);
 
 const urlYear = getYearFromURL();
@@ -273,31 +268,10 @@ function render(){
   document.getElementById("deltaCallout").innerHTML = msg;
 }
 
-const yearSel = document.getElementById("year");
-
-// Populate dropdown options
-Object.keys(data).forEach(y => {
-  yearSel.innerHTML += `<option value="${y}">${y}</option>`;
-});
-
-// Read year from URL or default
-const urlYear = getYearFromURL();
-yearSel.value = urlYear ? urlYear : "1980";
-
-// Handle dropdown change (UTM-safe)
-yearSel.addEventListener("change", () => {
+yearSel.onchange = () => {
   const params = new URLSearchParams(window.location.search);
   params.set("year", yearSel.value);
-  history.replaceState({}, "", `${location.pathname}?${params.toString()}`);
-  render();
-});
-
-// Initial render
-render();
-
-  render();
-};
-
+  window.history.replaceState({}, "", `${location.pathname}?${params}`);
   render();
 };
 
