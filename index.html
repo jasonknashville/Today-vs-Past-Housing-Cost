@@ -52,6 +52,7 @@ select{
   font-size:14px;
   border-radius:12px;
   border:1px solid var(--line);
+  background:#fff;
 }
 .split{
   display:grid;
@@ -97,7 +98,8 @@ h2{font-size:16px;margin-bottom:4px}
 <div class="wrap">
   <div class="header">
     <div class="logo">
-      <img src="https://kvcore-library.s3.amazonaws.com/remax1stchoice8207/images/03b9616f75a8e185d56a93c799829fdf.png" />
+      <img alt="Team Logo"
+           src="https://kvcore-library.s3.amazonaws.com/remax1stchoice8207/images/03b9616f75a8e185d56a93c799829fdf.png" />
     </div>
     <div>
       <h1>Then vs Now: Housing Affordability</h1>
@@ -106,10 +108,9 @@ h2{font-size:16px;margin-bottom:4px}
   </div>
 
   <div class="card">
-
     <div class="controls">
       <div class="field">
-        <label>Compare Year</label>
+        <label for="year">Compare Year</label>
         <select id="year"></select>
       </div>
     </div>
@@ -134,11 +135,11 @@ h2{font-size:16px;margin-bottom:4px}
           </div>
           <div class="stat">
             <div class="k">Monthly P&I Payment</div>
-            <div class="v" id="todayPmt"></div>
+            <div class="v" id="todayPmt">—</div>
           </div>
           <div class="stat">
             <div class="k">% of Income (Housing)</div>
-            <div class="v" id="todayPct"></div>
+            <div class="v" id="todayPct">—</div>
           </div>
         </div>
       </div>
@@ -146,35 +147,35 @@ h2{font-size:16px;margin-bottom:4px}
       <div class="divider"></div>
 
       <div>
-        <h2 id="pastTitle"></h2>
+        <h2 id="pastTitle">—</h2>
         <div class="meta">Historical comparison</div>
 
         <div class="grid">
           <div class="stat">
             <div class="k">Average Home Price</div>
-            <div class="v" id="pastPrice"></div>
+            <div class="v" id="pastPrice">—</div>
           </div>
           <div class="stat">
             <div class="k">Average Income</div>
-            <div class="v" id="pastIncome"></div>
+            <div class="v" id="pastIncome">—</div>
           </div>
           <div class="stat">
             <div class="k">Mortgage Rate</div>
-            <div class="v" id="pastRate"></div>
+            <div class="v" id="pastRate">—</div>
           </div>
           <div class="stat">
             <div class="k">Monthly P&I Payment</div>
-            <div class="v" id="pastPmt"></div>
+            <div class="v" id="pastPmt">—</div>
           </div>
           <div class="stat">
             <div class="k">% of Income (Housing)</div>
-            <div class="v" id="pastPct"></div>
+            <div class="v" id="pastPct">—</div>
           </div>
         </div>
       </div>
     </div>
 
-    <div id="deltaCallout" class="delta"></div>
+    <div id="deltaCallout" class="delta">—</div>
 
     <div class="foot">
       * This tool uses historical national averages and simplified assumptions for illustrative purposes only.
@@ -186,96 +187,116 @@ h2{font-size:16px;margin-bottom:4px}
       Mortgage Rates: Bankrate.com<br>
       Fun fact: Mortgage rates peaked at 16.63% in 1981.
     </div>
-
   </div>
 
   <div class="bottombar"></div>
 </div>
 
 <script>
-// ---------------- DATA ----------------
-const data = {
-  1980:{price:66400,income:12850.89,rate:13.74},
-  1985:{price:86800,income:15250.75,rate:11.85},
-  1990:{price:121500,income:18997.93,rate:9.97},
-  1995:{price:138000,income:22786.73,rate:7.86},
-  2000:{price:172900,income:29229.69,rate:8.08},
-  2005:{price:243600,income:34197.63,rate:5.93},
-  2010:{price:224300,income:39036.67,rate:4.86},
-  2015:{price:302500,income:44569.20,rate:3.99},
-  2020:{price:338600,income:51916.27,rate:3.37}
-};
+document.addEventListener("DOMContentLoaded", () => {
+  // ---- DATA ----
+  const data = {
+    1980:{price:66400,income:12850.89,rate:13.74},
+    1985:{price:86800,income:15250.75,rate:11.85},
+    1990:{price:121500,income:18997.93,rate:9.97},
+    1995:{price:138000,income:22786.73,rate:7.86},
+    2000:{price:172900,income:29229.69,rate:8.08},
+    2005:{price:243600,income:34197.63,rate:5.93},
+    2010:{price:224300,income:39036.67,rate:4.86},
+    2015:{price:302500,income:44569.20,rate:3.99},
+    2020:{price:338600,income:51916.27,rate:3.37}
+  };
+  const today = {price:410800,income:66622,rate:6.65};
 
-const today = {price:410800,income:66622,rate:6.65};
+  // ---- ELEMENTS ----
+  const yearSel = document.getElementById("year");
+  const el = (id) => document.getElementById(id);
 
-// -------------- HELPERS --------------
-function payment(price,rate){
-  const loan = price * 0.9;
-  const m = rate/100/12;
-  const n = 360;
-  return loan * (m*Math.pow(1+m,n)) / (Math.pow(1+m,n)-1);
-}
-
-function money(n){
-  return n.toLocaleString("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0});
-}
-
-// ----------- URL PARSING -------------
-function getYearFromURL(){
-  const p = new URLSearchParams(window.location.search);
-  const y = p.get("year");
-  return (y && data[y]) ? y : null;
-}
-
-// ------------- RENDER ---------------
-const yearSel = document.getElementById("year");
-Object.keys(data).forEach(y=>yearSel.innerHTML+=`<option value="${y}">${y}</option>`);
-
-const urlYear = getYearFromURL();
-yearSel.value = urlYear ? urlYear : "1980";
-
-function render(){
-  const y = yearSel.value;
-  const past = data[y];
-
-  const tPmt = payment(today.price,today.rate);
-  const pPmt = payment(past.price,past.rate);
-
-  document.getElementById("todayPmt").innerText = money(tPmt);
-  document.getElementById("todayPct").innerText = ((tPmt*12/today.income)*100).toFixed(1)+"%";
-
-  document.getElementById("pastTitle").innerText = y;
-  document.getElementById("pastPrice").innerText = money(past.price);
-  document.getElementById("pastIncome").innerText = money(past.income);
-  document.getElementById("pastRate").innerText = past.rate+"%";
-  document.getElementById("pastPmt").innerText = money(pPmt);
-  document.getElementById("pastPct").innerText = ((pPmt*12/past.income)*100).toFixed(1)+"%";
-
-  // -------- DELTA CALLOUT --------
-  const todayShare = (tPmt*12/today.income)*100;
-  const pastShare  = (pPmt*12/past.income)*100;
-  const delta = todayShare - pastShare;
-  const absDelta = Math.abs(delta).toFixed(1);
-
-  let msg = "";
-  if (Math.abs(delta) < 0.5){
-    msg = `Housing burden is roughly similar today compared to ${y} (P&I only).`;
-  } else if (delta > 0){
-    msg = `Housing consumes <strong>~${absDelta} percentage points more of income today</strong> than in ${y} (P&I only).`;
-  } else {
-    msg = `<strong>Despite higher prices, housing required a smaller share of income today than in ${y}</strong> (P&I only).`;
+  // Guard: if the select isn't found, stop (prevents silent weirdness)
+  if (!yearSel) {
+    console.error("Compare year <select id='year'> not found.");
+    return;
   }
-  document.getElementById("deltaCallout").innerHTML = msg;
-}
 
-yearSel.onchange = () => {
-  const params = new URLSearchParams(window.location.search);
-  params.set("year", yearSel.value);
-  window.history.replaceState({}, "", `${location.pathname}?${params}`);
+  // ---- HELPERS ----
+  const money0 = (n) => n.toLocaleString("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0});
+  const pct1 = (n) => `${n.toFixed(1)}%`;
+
+  function paymentPI(price, rate){
+    const loan = price * 0.9;        // 10% down
+    const m = rate/100/12;           // monthly rate
+    const n = 360;                   // 30-year
+    return loan * (m*Math.pow(1+m,n)) / (Math.pow(1+m,n)-1);
+  }
+
+  function getYearFromURL(){
+    const params = new URLSearchParams(window.location.search);
+    const y = params.get("year");
+    return (y && data[y]) ? y : null;
+  }
+
+  // ---- POPULATE DROPDOWN (critical) ----
+  const years = Object.keys(data).map(Number).sort((a,b)=>a-b);
+  yearSel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join("");
+
+  // ---- INITIAL YEAR ----
+  const urlYear = getYearFromURL();
+  yearSel.value = urlYear ? urlYear : "1980";
+
+  // ---- RENDER ----
+  function render(){
+    const y = yearSel.value;
+    const past = data[y];
+
+    if (!past) {
+      console.error("No dataset row for year:", y);
+      return;
+    }
+
+    const tPmt = paymentPI(today.price, today.rate);
+    const pPmt = paymentPI(past.price, past.rate);
+
+    const todayShare = (tPmt * 12 / today.income) * 100;
+    const pastShare  = (pPmt * 12 / past.income) * 100;
+
+    el("todayPmt").innerText = money0(tPmt);
+    el("todayPct").innerText = pct1(todayShare);
+
+    el("pastTitle").innerText = y;
+    el("pastPrice").innerText = money0(past.price);
+    el("pastIncome").innerText = money0(past.income);
+    el("pastRate").innerText = `${past.rate}%`;
+    el("pastPmt").innerText = money0(pPmt);
+    el("pastPct").innerText = pct1(pastShare);
+
+    const delta = todayShare - pastShare;
+    const absDelta = Math.abs(delta).toFixed(1);
+
+    let msg = "";
+    if (Math.abs(delta) < 0.5){
+      msg = `Housing burden is roughly similar today compared to ${y} (P&I only).`;
+    } else if (delta > 0){
+      msg = `Housing consumes <strong>~${absDelta} percentage points more of income today</strong> than in ${y} (P&I only).`;
+    } else {
+      msg = `<strong>Despite higher prices, housing required a smaller share of income today than in ${y}</strong> (P&I only).`;
+    }
+    el("deltaCallout").innerHTML = msg;
+  }
+
+  // ---- CHANGE HANDLER (UTM-preserving) ----
+  yearSel.addEventListener("change", () => {
+    const params = new URLSearchParams(window.location.search);
+    params.set("year", yearSel.value);
+
+    // This preserves UTMs (and any other params) while updating year.
+    history.replaceState({}, "", `${location.pathname}?${params.toString()}`);
+
+    render();
+  });
+
+  // ---- INITIAL RENDER ----
   render();
-};
-
-render();
+});
 </script>
 
 </body>
